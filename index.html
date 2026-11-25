@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hỏi thật một câu nè...</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background: linear-gradient(135deg, #ffe4e6, #fecdd3);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* --- MÀN 1: HỎI THÍCH KHÔNG --- */
+    .ask-card {
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      width: 88%;
+      max-width: 370px;
+      border-radius: 28px;
+      padding: 38px 24px;
+      text-align: center;
+      box-shadow: 0 20px 45px rgba(244, 63, 94, 0.22);
+      border: 2px solid #fff;
+      position: relative;
+      z-index: 5;
+      animation: popIn 0.4s ease;
+    }
+    .cute-icon {
+      width: 82px;
+      height: 82px;
+      background: #ffe4e6;
+      color: #f43f5e;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 20px;
+      animation: pulse 1.3s infinite;
+    }
+    .ask-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #881337;
+      margin-bottom: 30px;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      min-height: 56px;
+    }
+    .btn-yes {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+      color: white;
+      border: none;
+      padding: 14px 34px;
+      border-radius: 99px;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(225, 29, 72, 0.35);
+      transition: transform 0.15s ease;
+      z-index: 10;
+    }
+    .btn-yes:active { transform: scale(0.95); }
+    .btn-no {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      padding: 14px 28px;
+      border-radius: 99px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: left 0.16s ease-out, top 0.16s ease-out;
+      z-index: 20;
+    }
+
+    /* --- MÀN 2: TRÁI TIM CHỮ 3D --- */
+    .heart-screen {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 50;
+    }
+    canvas#loveCanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+    @keyframes popIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Màn 1 -->
+  <div class="ask-card" id="askCard">
+    <div class="cute-icon">
+      <i class="bi bi-heart-fill"></i>
+    </div>
+    <div class="ask-title">Bạn có thích tui không?</div>
+    <div class="btn-group">
+      <button class="btn-yes" id="yesBtn" onclick="acceptLove()">Có</button>
+      <button class="btn-no" id="noBtn">Không</button>
+    </div>
+  </div>
+
+  <!-- Màn 2 -->
+  <div class="heart-screen" id="heartScreen">
+    <canvas id="loveCanvas"></canvas>
+  </div>
+
+<script>
+  const noBtn = document.getElementById('noBtn');
+
+  function moveNoButton(e) {
+    if (e) e.preventDefault();
+    noBtn.style.position = 'fixed';
+
+    const padding = 24;
+    const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+    const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+
+    const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+    const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+    noBtn.style.left = randomX + 'px';
+    noBtn.style.top = randomY + 'px';
+  }
+
+  noBtn.addEventListener('mouseover', moveNoButton);
+  noBtn.addEventListener('touchstart', moveNoButton, { passive: false });
+  noBtn.addEventListener('click', moveNoButton);
+
+  // Hơn 100 ngôn ngữ
+  const loveLanguages = [
+    "Anh yêu em", "I love you", "사랑해", "愛してる", "我爱你", "Je t'aime",
+    "Ich liebe dich", "Te amo", "Ti amo", "Я тебя люблю", "Eu te amo", "ฉันรักคุณ",
+    "ຂ້ອຍຮັກເຈົ້າ", "ស្រលាញ់បង", "Aku cinta kamu", "Saya cinta awak", "Mahal kita",
+    "Seni seviyorum", "أحبك", "دوستت دارم", "मैं तुमसे प्यार करता हूँ", "আমি তোমায় ভালোবাসি",
+    "Ik hou van jou", "Jag älskar dig", "Jeg elsker deg", "Jeg elsker dig", "Rakastan sinua",
+    "Kocham Cię", "Miluji tě", "Ľúbim ťa", "Szeretlek", "Te iubesc", "Обичам те",
+    "Σ' αγαπώ", "Volim te", "Ljubim te", "Të dua", "Es tevi mīlu", "Aš tave myliu",
+    "Ma armastan sind", "Ég elska þig", "Tá grá agam duit", "Rwy'n dy garu di",
+    "Inħobbok", "Ich lieb di", "Ek het jou lief", "Ngiyakuthanda", "Nakupenda",
+    "Ndinokuda", "Mo ni fe re", "Ina son ku", "Ahabak", "Ani ohev otach", "Սիրում եմ քեզ",
+    "მიყვარხარ", "Mən səni sevirəm", "Мен сені сүйемін", "Мен сени сүйөм", "Men seni sevaman",
+    "Би чамд хайртай", "म तिमीलाई माया गर्छु", "මම ඔයාට ආදරෙයි", "ချစ်တယ်",
+    "நான் உன்னை காதலிக்கிறேன்", "నేను నిన్ను ప్రేమిస్తున్నాను", "ನಾನು ನಿನ್ನನ್ನು ಪ್ರೀತಿಸುತ್ತೇನೆ",
+    "ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു", "मी तुझ्यावर प्रेम करतो", "હું તને પ્રેમ કરું છું",
+    "ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ", "Aloha wau iā ʻoe", "Aroha ahau ki a koe", "Ou te alofa ia te oe",
+    "Ofa atu", "Te aroha nei au ia oe", "Kuv hlub koj", "Nws hlub koj", "Mi amas vin",
+    "Amo te", "Phileō se", "Ti tengu caru", "T'estimo", "Maite zaitut", "Quérote",
+    "Aim' ti", "Mwen renmen ou", "Mi stima bo", "Nalingi yo", "Ndakukunda", "Ke a go rata",
+    "Ngiyakutsandza", "Ndiyakuthanda", "Uthando lwami", "Gisugua ko ikaw", "Gihigugma tika",
+    "Ay-ayaten ka", "Kaluguran daka", "Inaro taka", "Palangga ta ikaw", "我愛你",
+    "사랑합니다", "大好き", "愛してるよ", "Em yêu anh", "Thương cậu"
+  ];
+
+  function start3DWordHeart() {
+    const canvas = document.getElementById('loveCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Tạo các dải ruy-băng chữ quấn 3D tạo thành hình khối trái tim
+    const words3D = [];
+    const totalWords = 115;
+
+    for (let i = 0; i < totalWords; i++) {
+      // Góc tham số trái tim (t từ 0 đến 2*PI)
+      const t = (i / totalWords) * Math.PI * 2;
+      // Công thức trái tim chuẩn
+      const hx = 16 * Math.pow(Math.sin(t), 3);
+      const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+      // Tạo độ dày khối 3D (trục Z) theo hình dải xoắn
+      const zOffset = Math.sin(t * 3 + i * 0.4) * 5.5;
+
+      words3D.push({
+        hx,
+        hy,
+        hz: zOffset,
+        startX: (Math.random() - 0.5) * 36,
+        startY: (Math.random() - 0.5) * 36,
+        startZ: (Math.random() - 0.5) * 18,
+        text: loveLanguages[i % loveLanguages.length],
+        phase: i * 0.15
+      });
+    }
+
+    // Thêm các hạt bụi ánh sáng hồng bay lơ lửng xung quanh cho lung linh
+    const sparkles = Array.from({ length: 65 }, () => ({
+      x: (Math.random() - 0.5) * 45,
+      y: (Math.random() - 0.5) * 45,
+      z: (Math.random() - 0.5) * 25,
+      size: Math.random() * 1.8 + 0.5,
+      speed: Math.random() * 0.02 + 0.01
+    }));
+
+    const rotY = 0;
+    let beatPhase = 0;
+    let animationStart;
+
+    function animate() {
+      if (animationStart === undefined) animationStart = performance.now();
+      const progress = Math.min(1, (performance.now() - animationStart) / 3000);
+      const shapeProgress = progress * progress * (3 - 2 * progress);
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      beatPhase += 0.05;
+      const beat = 1 + Math.pow(Math.sin(beatPhase), 6) * 0.07;
+
+      const baseScale = (Math.min(width, height) / 40) * beat;
+      const centerX = width / 2;
+      const centerY = height * 0.48;
+      const fov = 42; // Độ sâu phối cảnh 3D
+
+      // Vẽ hạt bụi sao hồng
+      for (const s of sparkles) {
+        const cosR = Math.cos(rotY * 0.6);
+        const sinR = Math.sin(rotY * 0.6);
+        const rx = s.x * cosR - s.z * sinR;
+        const rz = s.x * sinR + s.z * cosR;
+        const perspective = fov / (fov + rz + 20);
+
+        const sx = centerX + rx * baseScale * perspective;
+        const sy = centerY + s.y * baseScale * perspective;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, s.size * perspective, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 110, 175, ${0.45 * perspective})`;
+        ctx.fill();
+      }
+
+      // Tính tọa độ chiếu 3D -> 2D cho từng chữ
+      const projected = words3D.map((item) => {
+        const x = item.startX + (item.hx - item.startX) * shapeProgress;
+        const y = item.startY + (item.hy - item.startY) * shapeProgress;
+        const z = item.startZ + (item.hz - item.startZ) * shapeProgress;
+
+        // Xoay quanh trục Y
+        const cosY = Math.cos(rotY);
+        const sinY = Math.sin(rotY);
+
+        const x3d = x * cosY - z * sinY;
+        const z3d = x * sinY + z * cosY;
+        const y3d = y;
+
+        // Phép chiếu phối cảnh (càng gần màn hình càng to và sáng)
+        const perspective = fov / (fov + z3d + 16);
+        const screenX = centerX + x3d * baseScale * perspective;
+        const screenY = centerY + y3d * baseScale * perspective;
+
+        return {
+          ...item,
+          screenX,
+          screenY,
+          z3d,
+          perspective
+        };
+      });
+
+      // Sắp xếp từ xa tới gần (Painter's Algorithm) để chữ trước đè lên chữ sau chuẩn 3D
+      projected.sort((a, b) => b.z3d - a.z3d);
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      for (const p of projected) {
+        const fontSize = Math.max(8, Math.round(13.5 * p.perspective));
+        // Độ sáng & màu chuyển từ hồng đậm phía sau sang hồng phấn rực sáng phía trước
+        const alpha = Math.min(1, Math.max(0.22, (p.perspective - 0.55) * 1.8));
+
+        ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+        ctx.fillStyle = alpha > 0.75
+          ? `rgba(255, 182, 213, ${alpha})`
+          : `rgba(255, 65, 135, ${alpha})`;
+
+        if (alpha > 0.7) {
+          ctx.shadowColor = '#ff1a75';
+          ctx.shadowBlur = 12 * p.perspective;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        // Giữ chữ luôn nằm ngang để dễ đọc khi xoay tròn
+        ctx.fillText(p.text, p.screenX, p.screenY);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+  }
+
+  function acceptLove() {
+    document.getElementById('askCard').style.display = 'none';
+    document.getElementById('heartScreen').style.display = 'block';
+    start3DWordHeart();
+  }
+</script>
+</body>
+</html>
